@@ -4,6 +4,11 @@ from django.utils import timezone
 from constants import TEXT_FIELD_SIZE, CHAR_FIELD_SIZE
 
 
+def upload_location(instance, filename):
+    """ defines the location of user profile pics """
+    return '%s_%s/%s' % (instance.id, instance.username, filename)
+
+
 class AppUserManager(BaseUserManager):
     def create_user(self, email, username,
                     first_name, last_name, password=None, is_active=True, is_staff=False, is_admin=False):
@@ -58,12 +63,21 @@ class AppUser(AbstractBaseUser):
     admin = models.BooleanField(default=False)  # admin member
     created_at = models.DateTimeField(default=timezone.now)
     confirmed = models.BooleanField(default=False)
-    confirmed_date = models.DateTimeField(auto_now_add=False, null=True, blank=True)
+    confirmed_at = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     latitude = models.DecimalField(blank=True, null=True, decimal_places=6, max_digits=9)
     longitude = models.DecimalField(blank=True, null=True, decimal_places=6, max_digits=9)
     position = models.CharField(max_length=CHAR_FIELD_SIZE, blank=True)  # place of employment
     bio = models.TextField(max_length=TEXT_FIELD_SIZE, blank=True, null=True)
     finder = models.BooleanField(default=True)  # is this user a finder or a giver
+    image = models.ImageField(
+        upload_to=upload_location,
+        null=True,
+        blank=True,
+        height_field='height_field',
+        width_field='width_field',
+    )
+    height_field = models.IntegerField(default=0)
+    width_field = models.IntegerField(default=0)
 
     def __str__(self):
         return '%s, %s' % (self.full_name, self.email)

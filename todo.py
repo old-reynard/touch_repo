@@ -13,4 +13,5 @@
 # done 11: check IntegrityError, why cannot a user be registered - email or username?
 # done 12: fix create_user URL
 # todo 13: look into localization in both Django and Flutter
-# 
+# done 14: user profile pictures
+#
