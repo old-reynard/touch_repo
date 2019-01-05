@@ -1,15 +1,19 @@
-from tastypie.authentication import ApiKeyAuthentication, Authentication
+from django.db import IntegrityError
+from django.db.models import signals
+from tastypie.authentication import Authentication, ApiKeyAuthentication
 from tastypie.authorization import Authorization
+from tastypie.models import create_api_key
 from tastypie.resources import ModelResource
 from accounts.models import AppUser, Specialty, Review
+from .exceptions import ApiBadRequest
+
+# This creates API keys for every users, keys are used to access the API
+signals.post_save.connect(create_api_key, sender=AppUser)
 
 
-class AppAuthentication(Authentication):
-    def is_authenticated(self, request, **kwargs):
-        return request.user.active
-
-    # def get_identifier(self, request):
-    #     return request.user.full_name
+class AppAuthorization(Authorization):  # custom auth to only show data relevant to the user
+    def read_list(self, object_list, bundle):
+        return object_list.filter(api_key=bundle.request.user.api_key)
 
 
 class UserResource(ModelResource):
@@ -17,8 +21,54 @@ class UserResource(ModelResource):
         queryset = AppUser.objects.all()
         resource_name = 'users'
         fields = ['first_name', 'last_name', 'email', 'latitude', 'longitude']
+        allowed_methods = ['get', 'put']
+        authorization = AppAuthorization()
+        authentication = ApiKeyAuthentication()
+
+
+class CreateUserResource(ModelResource):
+
+    class Meta:
+        queryset = AppUser.objects.all()
+        resource_name = 'create'
+        object_class = AppUser
+        allowed_methods = ['post']
+        always_return_data = True
+        authentication = Authentication()
         authorization = Authorization()
-        authentication = AppAuthentication()
+        include_resource_uri = False
+
+    def hydrate(self, bundle):
+        required_fields = ('first_name', 'last_name', 'username', 'email')
+        for field in required_fields:
+            if field not in bundle.data:
+                raise ApiBadRequest(
+                    code='missing_key',
+                    message='Must provide {missing_key} when creating a user'.format(missing_key=field)
+                )
+        return bundle
+
+    def obj_create(self, bundle, **kwargs):
+        username = bundle.data['username']
+        password = bundle.data['password']
+        first_name = bundle.data['first_name']
+        last_name = bundle.data['last_name']
+        email = bundle.data['email']
+        try:
+            bundle.obj = AppUser.objects.create_user(email, username, first_name, last_name, password=password)
+        except IntegrityError as e:
+            error_message = str(e)
+            if 'username' in error_message:
+                message_key = 'username'
+            elif 'email' in error_message:
+                message_key = 'email'
+            else:
+                message_key = ''
+            raise ApiBadRequest(
+                code='Unique {message_key} fail'.format(message_key=message_key),
+                message='It seems user with this {message_key} already exists'.format(message_key=message_key)
+            )
+        return bundle
 
 
 class SpecialtyResource(ModelResource):
@@ -26,7 +76,7 @@ class SpecialtyResource(ModelResource):
         queryset = Specialty.objects.all()
         resource_name = 'specs'
         authorization = Authorization()
-        authentication = AppAuthentication()
+        authentication = ApiKeyAuthentication()
 
 
 class ReviewResource(ModelResource):
@@ -34,4 +84,4 @@ class ReviewResource(ModelResource):
         queryset = Review.objects.all()
         resource_name = 'r'
         authorization = Authorization()
-        authentication = AppAuthentication()
+        authentication = ApiKeyAuthentication()

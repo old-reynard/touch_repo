@@ -24,8 +24,9 @@ SECRET_KEY = os.environ.get('KK_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+# DEBUG = False
 
-# ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ['45.33.98.155']
 ALLOWED_HOSTS = ['*']
 
 
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tastypie',
     'accounts',
     'api',
 ]
@@ -81,12 +83,12 @@ WSGI_APPLICATION = 'touch_back.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'touch_users',
-        'USER': os.environ.get('POSTGRES_USER_1'),
-        'PASSWORD': os.environ.get('POSTGRES_PASS_1'),
-        'HOST': '127.0.0.1',
-        'PORT': '5432'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'touch_users.sqlite3',
+        # 'USER': os.environ.get('POSTGRES_USER_1'),
+        # 'PASSWORD': os.environ.get('POSTGRES_PASS_1'),
+        # 'HOST': '127.0.0.1',
+        # 'PORT': '5432'
     }
 }
 
@@ -128,3 +130,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
