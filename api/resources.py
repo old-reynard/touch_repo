@@ -17,6 +17,9 @@ class AppAuthorization(Authorization):  # custom auth to only show data relevant
 
 
 class UserResource(ModelResource):
+    """
+    API resource that provides user data according to API keys
+    """
     class Meta:
         queryset = AppUser.objects.all()
         resource_name = 'users'
@@ -27,7 +30,6 @@ class UserResource(ModelResource):
 
 
 class CreateUserResource(ModelResource):
-
     class Meta:
         queryset = AppUser.objects.all()
         resource_name = 'create'
@@ -69,6 +71,33 @@ class CreateUserResource(ModelResource):
                 message='It seems user with this {message_key} already exists'.format(message_key=message_key)
             )
         return bundle
+
+
+class UniqueUsernameResource(ModelResource):
+    """
+    API resource that verifies that username is unique
+    """
+    class Meta:
+        object_class = AppUser
+        resource_name = 'unique'
+        allowed_methods = ['post']
+        fields = ['username']
+        authentication = Authentication()
+        authorization = Authorization()
+        always_return_data = True
+
+    def obj_create(self, bundle, **kwargs):
+        username = bundle.data['username']
+        try:
+            query = AppUser.objects.filter(username=username)
+            if query.exists():
+                bundle.obj = query.first()
+        except AttributeError as e:
+            raise ApiBadRequest(code='Server error', message=str(e))
+        return bundle
+
+
+# class UniqueEmailResource
 
 
 class SpecialtyResource(ModelResource):

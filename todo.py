@@ -12,6 +12,10 @@
 # done 10: allow unauthorized POST requests for registration - created separate API resource
 # done 11: check IntegrityError, why cannot a user be registered - email or username?
 # done 12: fix create_user URL
-# todo 13: look into localization in both Django and Flutter
+# todo 13: look into localization in Django - Flutter done
 # done 14: user profile pictures
+# done 15: delete users pics when the user is deleted - pics are not deleted, rather user gets inactive
+# todo 16: change db to postgres in production
+# todo 17: setup password validation between Flutter and Django
 #
+
