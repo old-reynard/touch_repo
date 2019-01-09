@@ -97,7 +97,28 @@ class UniqueUsernameResource(ModelResource):
         return bundle
 
 
-# class UniqueEmailResource
+class UniqueEmailResource(ModelResource):
+    """
+    API resource that verifies that username is unique
+    """
+    class Meta:
+        object_class = AppUser
+        resource_name = 'unique'
+        allowed_methods = ['post']
+        fields = ['email']
+        authentication = Authentication()
+        authorization = Authorization()
+        always_return_data = True
+
+    def obj_create(self, bundle, **kwargs):
+        email = bundle.data['email']
+        try:
+            query = AppUser.objects.filter(email=email)
+            if query.exists():
+                bundle.obj = query.first()
+        except AttributeError as e:
+            raise ApiBadRequest(code='Server error', message=str(e))
+        return bundle
 
 
 class SpecialtyResource(ModelResource):
